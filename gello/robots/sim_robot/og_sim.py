@@ -292,6 +292,7 @@ class OGRobotServer:
                         "r_potential": 1.0,
                     },
                 }
+                cfg["objects"] = []
             elif FULL_SCENE:
                 cfg["scene"] = {
                     "type": "InteractiveTraversableScene",
