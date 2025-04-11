@@ -1,0 +1,12 @@
+joystick:
+  horizontal:
+    center: 2139
+    limits:
+    - 965
+    - 3474
+  vertical:
+    center: 1786
+    limits:
+    - 588
+    - 2799
+side: right
