@@ -35,6 +35,7 @@ class OGRobotServer:
         recording_path: Optional[str] = None,
         task_name: Optional[str] = None,
         ghosting: bool = True,
+        brs: bool = False,
     ):
         self.task_name = task_name
         if self.task_name is not None:
@@ -166,6 +167,20 @@ class OGRobotServer:
 
         # Reset environment to initialize
         self.reset()
+        
+        if brs:
+            # Hacks for cached scene
+            dishwasher = self.env.scene.object_registry("name", "dishwasher_dngvvi_0")
+            dishwasher.visual_only = True
+            dishwasher.links["link_0"].visual_only = False
+            dishwasher.joints["j_link_0"].friction = 0.1
+            teacup_131 = self.env.scene.object_registry("name", "teacup_131")
+            teacup_131.set_position(th.tensor([-12.5, 2.3, 0.54]))
+            coffee_table = self.env.scene.object_registry("name", "coffee_table_gcollb_0")
+            coffee_table.links["base_link"].mass = 200.0
+            shelf = self.env.scene.object_registry("name", "shelf_owvfik_1")
+            shelf.links["base_link"].mass = 200.0
+            og.sim.step()
 
         # Take a single step
         action = self.get_action()

@@ -13,7 +13,7 @@ USE_FLUID = False
 USE_CLOTH = False
 USE_ARTICULATED = False
 FULL_SCENE = False
-VIEWING_MODE = ViewingMode.MULTI_VIEW_1
+VIEWING_MODE = ViewingMode.VR
 SIMPLIFIED_TRUNK_CONTROL = True
 
 # Robot parameters
