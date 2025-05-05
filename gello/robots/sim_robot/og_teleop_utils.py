@@ -1031,7 +1031,7 @@ def update_checkpoint(env, frame_counter, recording_path=None, event_queue=None)
             env.update_checkpoint()
             print("Auto recorded checkpoint due to periodic save!")
             if event_queue:
-                add_status_event(event_queue, "checkpoint", "Checkpoint Recorded manually")
+                add_status_event(event_queue, "checkpoint", "Checkpoint Recorded due to periodic save")
         updated_counter = 0
     
     return updated_counter
@@ -1269,7 +1269,7 @@ def generate_robot_config(task_name=None, task_cfg=None):
         "name": ROBOT_NAME,
         "action_normalize": False,
         "controller_config": controller_config,
-        "self_collisions": False,
+        "self_collisions": True,
         "obs_modalities": [],
         "position": [0.0, 0.0, 0.0],
         "orientation": [0.0, 0.0, 0.0, 1.0],
