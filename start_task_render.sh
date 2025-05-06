@@ -13,7 +13,7 @@ YAML_FILE="sampled_task/available_tasks.yaml"
 
 # Use yq to extract all the top-level keys (scenes)
 TASK_LIST=($(yq e 'keys | .[]' "$YAML_FILE"))
-OPERATOR_LIST=("Deyu" "Jack" "Jerry" "Mark" "Samuel" "Shine" "William" "Yibo" "Zeff" "Test")
+OPERATOR_LIST=("Deyu" "Shine" "Chris" "Yibo" "Mark" "Zheng" "Hang" "Test")
 
 print_usage() {
   echo "Interactive script to record ROS episodes"
@@ -26,15 +26,15 @@ print_usage() {
 echo "Welcome to the ROS Episode Recording Script"
 print_usage
 
-# Select task
-echo -e "\nAvailable tasks:"
-select TASK_NAME in "${TASK_LIST[@]}"; do
-  if [ -n "$TASK_NAME" ]; then
-    break
-  else
-    echo "Invalid selection. Please try again."
-  fi
-done
+# # Select task
+# echo -e "\nAvailable tasks:"
+# select TASK_NAME in "${TASK_LIST[@]}"; do
+#   if [ -n "$TASK_NAME" ]; then
+#     break
+#   else
+#     echo "Invalid selection. Please try again."
+#   fi
+# done
 
 # Select operator
 echo -e "\nAvailable operators:"
@@ -61,10 +61,11 @@ fi
 
 echo $TASK_NAME
 echo $OPERATOR
-echo "{\"operator\": \"${OPERATOR}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/${TASK_NAME}__${time_string}__episode.json
+batch_id=1
+echo "{\"operator\": \"${OPERATOR}\", \"batch_id\": \"${batch_id}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/${TASK_NAME}__${time_string}__episode.json
 # Run the Python script multiple times
-echo "Would run: python experiments/launch_nodes.py --recording_path ${SAVE_FOLDER}/${TASK_NAME}__${time_string} --task_name ${TASK_NAME}"
-python experiments/launch_nodes.py  --task_name ${TASK_NAME}
+echo "Would run: python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5"
+python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5
 
 
 echo "All iterations completed successfully."
