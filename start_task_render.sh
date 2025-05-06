@@ -64,7 +64,7 @@ echo $OPERATOR
 echo "{\"operator\": \"${OPERATOR}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/${TASK_NAME}__${time_string}__episode.json
 # Run the Python script multiple times
 echo "Would run: python experiments/launch_nodes.py --recording_path ${SAVE_FOLDER}/${TASK_NAME}__${time_string} --task_name ${TASK_NAME}"
-python experiments/launch_nodes.py --recording_path ${SAVE_FOLDER}/${TASK_NAME}__${time_string}.hdf5 --task_name ${TASK_NAME}
+python experiments/launch_nodes.py  --task_name ${TASK_NAME}
 
 
 echo "All iterations completed successfully."
