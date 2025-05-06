@@ -2,9 +2,9 @@ from dynamixel_sdk import *  # Uses Dynamixel SDK library
 
 # Candidate device names
 DEVICE_CANDIDATES = ['/dev/ttyUSB0', '/dev/ttyUSB1']
-BAUDRATE = 3000000
+BAUDRATE = 2000000
 PROTOCOL_VERSION = 2.0
-ID_RANGE = range(0, 16)  # IDs 0–252
+ID_RANGE = range(0, 18)  # IDs 0–252
 
 # Control table address for reboot (Protocol 2.0)
 ADDR_REBOOT = 0x08
