@@ -13,7 +13,7 @@ YAML_FILE="sampled_task/available_tasks.yaml"
 
 # Use yq to extract all the top-level keys (scenes)
 TASK_LIST=($(yq e 'keys | .[]' "$YAML_FILE"))
-OPERATOR_LIST=("Deyu" "Shine" "Chris" "Yibo" "Mark" "Zheng" "Hang" "Test")
+OPERATOR_LIST=("Deyu" "Shine" "Kris" "Yibo" "Mark" "Test")
 
 print_usage() {
   echo "Interactive script to record ROS episodes"
@@ -62,7 +62,7 @@ fi
 echo $TASK_NAME
 echo $OPERATOR
 batch_id=1
-echo "{\"operator\": \"${OPERATOR}\", \"batch_id\": \"${batch_id}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/${TASK_NAME}__${time_string}__episode.json
+echo "{\"operator\": \"${OPERATOR}\", \"batch_id\": \"${batch_id}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/batch_${batch_id}__${time_string}__episode.json
 # Run the Python script multiple times
 echo "Would run: python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5"
 python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5
