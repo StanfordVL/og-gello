@@ -36,15 +36,34 @@ print_usage
 #   fi
 # done
 
-# Select operator
+
+
 echo -e "\nAvailable operators:"
-select OPERATOR in "${OPERATOR_LIST[@]}"; do
-  if [ -n "$OPERATOR" ]; then
-    break
+for i in "${!OPERATOR_LIST[@]}"; do
+  echo "$((i + 1))) ${OPERATOR_LIST[$i]}"
+done
+
+while true; do
+  read -p "Select an operator by number, or type a custom one: " INPUT
+
+  if [[ "$INPUT" =~ ^[0-9]+$ ]]; then
+    INDEX=$((INPUT - 1))
+    if [ $INDEX -ge 0 ] && [ $INDEX -lt ${#OPERATOR_LIST[@]} ]; then
+      OPERATOR="${OPERATOR_LIST[$INDEX]}"
+      echo "You selected: $OPERATOR"
+      break
+    else
+      echo "Invalid number. Please try again."
+    fi
   else
-    echo "Invalid selection. Please try again."
+    OPERATOR="$INPUT"
+    echo "Custom operator selected: $OPERATOR"
+    break
   fi
 done
+
+
+
 
 # Print selected configuration
 echo -e "\nConfiguration:"
@@ -65,7 +84,7 @@ batch_id=1
 echo "{\"operator\": \"${OPERATOR}\", \"batch_id\": \"${batch_id}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/batch_${batch_id}__${time_string}__episode.json
 # Run the Python script multiple times
 echo "Would run: python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5"
-python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5
+# python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5
 
 
 echo "All iterations completed successfully."
