@@ -36,15 +36,34 @@ print_usage
 #   fi
 # done
 
-# Select operator
+
+
 echo -e "\nAvailable operators:"
-select OPERATOR in "${OPERATOR_LIST[@]}"; do
-  if [ -n "$OPERATOR" ]; then
-    break
+for i in "${!OPERATOR_LIST[@]}"; do
+  echo "$((i + 1))) ${OPERATOR_LIST[$i]}"
+done
+
+while true; do
+  read -p "Select an operator by number, or type a custom one: " INPUT
+
+  if [[ "$INPUT" =~ ^[0-9]+$ ]]; then
+    INDEX=$((INPUT - 1))
+    if [ $INDEX -ge 0 ] && [ $INDEX -lt ${#OPERATOR_LIST[@]} ]; then
+      OPERATOR="${OPERATOR_LIST[$INDEX]}"
+      echo "You selected: $OPERATOR"
+      break
+    else
+      echo "Invalid number. Please try again."
+    fi
   else
-    echo "Invalid selection. Please try again."
+    OPERATOR="$INPUT"
+    echo "Custom operator selected: $OPERATOR"
+    break
   fi
 done
+
+
+
 
 # Print selected configuration
 echo -e "\nConfiguration:"
