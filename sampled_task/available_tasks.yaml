@@ -1,363 +1,396 @@
 assembling_gift_baskets:
-  robot_start_orientation:
-  - 0.003308301791548729
-  - -0.0038213026709854603
-  - -0.4317622184753418
-  - 0.9019733667373657
-  robot_start_position:
-  - 3.8534889221191406
-  - 3.954792022705078
-  - 0.003772735595703125
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.005054005421698093
+    - -2.1764077246189117e-05
+    - 0.7757347822189331
+    - 0.6310389041900635
+    robot_start_position:
+    - 4.86798095703125
+    - 4.3265380859375
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 can_beans:
-  robot_start_orientation:
-  - 0.0014615082181990147
-  - -0.004838203079998493
-  - -0.5534663796424866
-  - 0.8328561782836914
-  robot_start_position:
-  - 6.519832611083984
-  - 1.0882034301757812
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.004774917382746935
+    - 0.0016561562661081553
+    - -0.9685148000717163
+    - 0.24890479445457458
+    robot_start_position:
+    - 5.226409912109375
+    - 3.119110107421875
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 can_meat:
-  robot_start_orientation:
-  - -2.4153385311365128e-05
-  - -0.005054496694356203
-  - -0.6333605051040649
-  - 0.7738403677940369
-  robot_start_position:
-  - 8.938488006591797
-  - -0.7638053894042969
-  - -0.0186004638671875
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.004979467485100031
+    - 0.0008657632861286402
+    - -0.9536957740783691
+    - 0.3007306754589081
+    robot_start_position:
+    - 5.42657470703125
+    - -0.488983154296875
+    - 0.0037841796875
+    scene_model: house_single_floor
 canning_food:
-  robot_start_orientation:
-  - -0.004966165404766798
-  - 0.0009387258905917406
-  - -0.9551568031311035
-  - 0.2960573732852936
-  robot_start_position:
-  - 5.531314849853516
-  - -0.6649017333984375
-  - -0.018604278564453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.0048652831465005875
+    - -0.0013688469771295786
+    - -0.898568868637085
+    - 0.43880340456962585
+    robot_start_position:
+    - 5.3856201171875
+    - 1.494659423828125
+    - 0.0037841796875
+    scene_model: house_single_floor
 carrying_in_groceries:
-  robot_start_orientation:
-  - 0.004123101942241192
-  - -0.00292303878813982
-  - -0.35815557837486267
-  - 0.9336482882499695
-  robot_start_position:
-  - -19.721343994140625
-  - 5.482757568359375
-  - -0.01861572265625
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.008505569770932198
+    - 0.019006051123142242
+    - -0.8286195993423462
+    - 0.5594246983528137
+    robot_start_position:
+    - -15.032073974609375
+    - 6.73876953125
+    - -0.005859375
+    scene_model: house_single_floor
 chop_an_onion:
-  robot_start_orientation:
-  - -0.0001915167667903006
-  - -0.005050402134656906
-  - 0.984993040561676
-  - 0.17251989245414734
-  robot_start_position:
-  - 7.578563690185547
-  - 2.2219696044921875
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - 0.003545355051755905
+    - -0.003601641859859228
+    - -0.41245704889297485
+    - 0.9109629392623901
+    robot_start_position:
+    - 6.93060302734375
+    - 1.49749755859375
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 chopping_wood:
-  robot_start_orientation:
-  - 0.004408563021570444
-  - 0.0024715419858694077
-  - 0.00956797506660223
-  - 0.9999414086341858
-  robot_start_position:
-  - -7.347881317138672
-  - -0.547698974609375
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.0016757436096668243
+    - 0.004768225364387035
+    - 0.45773082971572876
+    - 0.8890764713287354
+    robot_start_position:
+    - -10.657684326171875
+    - 2.961212158203125
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 clean_up_broken_glass:
-  robot_start_orientation:
-  - 0.004591480363160372
-  - -0.0021129148080945015
-  - -0.299808144569397
-  - 0.9539861083030701
-  robot_start_position:
-  - 6.493568420410156
-  - 2.1357498168945312
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - 0.001841855002567172
+    - -0.004706318024545908
+    - -0.5311652421951294
+    - 0.8472532033920288
+    robot_start_position:
+    - 3.627716064453125
+    - 3.120452880859375
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 cleaning_up_plates_and_food:
-  robot_start_orientation:
-  - -0.003568043699488044
-  - 0.003579481737688184
-  - 0.5843746066093445
-  - 0.8114683032035828
-  robot_start_position:
-  - 5.800880432128906
-  - 2.2040443420410156
-  - -0.018642425537109375
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - 0.0003356111701577902
+    - -0.005043020937591791
+    - 0.9903920292854309
+    - 0.1381959319114685
+    robot_start_position:
+    - 6.9866943359375
+    - 2.269317626953125
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 cook_a_brisket:
-  robot_start_orientation:
-  - -0.0021039508283138275
-  - -0.004595512989908457
-  - -0.7361964583396912
-  - 0.6767489910125732
-  robot_start_position:
-  - 7.02752685546875
-  - -0.924346923828125
-  - -0.01861572265625
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.0047464738599956036
+    - -0.0017364295199513435
+    - -0.8870946168899536
+    - 0.46155980229377747
+    robot_start_position:
+    - 8.7554931640625
+    - 1.575592041015625
+    - 0.0037841796875
+    scene_model: house_single_floor
 cook_bacon:
-  robot_start_orientation:
-  - 0.004997120704501867
-  - 0.0007566245039924979
-  - -0.11043825000524521
-  - 0.9938701391220093
-  robot_start_position:
-  - 5.021331787109375
-  - -0.79327392578125
-  - -0.01861572265625
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.004933505319058895
+    - 0.001097407890483737
+    - 0.726697564125061
+    - 0.6869389414787292
+    robot_start_position:
+    - 8.079254150390625
+    - -1.06353759765625
+    - 0.0037841796875
+    scene_model: house_single_floor
 cook_cabbage:
-  robot_start_orientation:
-  - -0.004979707300662994
-  - -0.000864558620378375
-  - 0.8097702860832214
-  - 0.5867253541946411
-  robot_start_position:
-  - 8.892669677734375
-  - -0.912322998046875
-  - -0.01861572265625
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.0026474660262465477
+    - -0.00430523743852973
+    - -0.7630957365036011
+    - 0.6462656855583191
+    robot_start_position:
+    - 7.708587646484375
+    - -0.7735595703125
+    - 0.0037841796875
+    scene_model: house_single_floor
 cook_eggplant:
-  robot_start_orientation:
-  - -0.002784466603770852
-  - 0.004217906389385462
-  - -0.9994183778762817
-  - 0.03372430056333542
-  robot_start_position:
-  - 5.331703186035156
-  - -0.6905364990234375
-  - -0.018604278564453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.0043802410364151
+    - 0.002521366812288761
+    - 0.6536208391189575
+    - 0.7568053603172302
+    robot_start_position:
+    - 7.03240966796875
+    - -0.953521728515625
+    - 0.0037841796875
+    scene_model: house_single_floor
 cool_cakes:
-  robot_start_orientation:
-  - -0.0015142641495913267
-  - -0.004821694456040859
-  - -0.7073472738265991
-  - 0.7068480849266052
-  robot_start_position:
-  - 3.078216552734375
-  - 2.97625732421875
-  - 0.003753662109375
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - 0.0047397310845553875
+    - -0.001754383440129459
+    - -0.27530622482299805
+    - 0.9613432884216309
+    robot_start_position:
+    - 4.867034912109375
+    - 3.061798095703125
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 freeze_fruit:
-  robot_start_orientation:
-  - -0.0019056892488151789
-  - -0.004681158810853958
-  - -0.7264769077301025
-  - 0.6871722340583801
-  robot_start_position:
-  - 6.702136993408203
-  - -0.8865814208984375
-  - -0.018604278564453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - 0.0018858104012906551
+    - 0.004689079709351063
+    - 0.2332150787115097
+    - 0.9724120497703552
+    robot_start_position:
+    - 5.120361328125
+    - -0.41485595703125
+    - 0.0037841796875
+    scene_model: house_single_floor
 freeze_meat:
-  robot_start_orientation:
-  - 0.0036492724902927876
-  - 0.0034964592196047306
-  - 0.09378671646118164
-  - 0.9955794811248779
-  robot_start_position:
-  - 5.058551788330078
-  - 0.13705062866210938
-  - -0.018604278564453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.002468504011631012
+    - -0.004410393536090851
+    - -0.754175066947937
+    - 0.6566540002822876
+    robot_start_position:
+    - 8.90155029296875
+    - -0.80841064453125
+    - 0.0037841796875
+    scene_model: house_single_floor
 freeze_pies:
-  robot_start_orientation:
-  - -0.0015858229016885161
-  - -0.004798992536962032
-  - -0.7108397483825684
-  - 0.7033358216285706
-  robot_start_position:
-  - 5.536525726318359
-  - -0.8546905517578125
-  - -0.018604278564453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.002802755683660507
+    - 0.004205789417028427
+    - -0.9993684887886047
+    - 0.03517213836312294
+    robot_start_position:
+    - 5.13653564453125
+    - -0.024200439453125
+    - 0.0037841796875
+    scene_model: house_single_floor
 freeze_vegetables:
-  robot_start_orientation:
-  - -0.004852246958762407
-  - 0.001413612742908299
-  - 0.7117346525192261
-  - 0.7024301886558533
-  robot_start_position:
-  - 8.051017761230469
-  - -1.0696830749511719
-  - -0.018604278564453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.0004805810749530792
+    - -0.005031214561313391
+    - -0.6564157009124756
+    - 0.7543824315071106
+    robot_start_position:
+    - 8.867218017578125
+    - -0.771820068359375
+    - 0.0037841796875
+    scene_model: house_single_floor
 hanging_pictures:
-  robot_start_orientation:
-  - -0.004898024257272482
-  - 0.0012465041363611817
-  - 0.7197173237800598
-  - 0.6942487955093384
-  robot_start_position:
-  - 6.873210906982422
-  - 0.1161346435546875
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.0023645502515137196
+    - 0.00446694390848279
+    - -0.9999860525131226
+    - 0.0015136055881157517
+    robot_start_position:
+    - 5.7799072265625
+    - 2.93792724609375
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 hiding_Easter_eggs:
-  robot_start_orientation:
-  - -0.0018276073969900608
-  - 0.004712157417088747
-  - 0.46725261211395264
-  - 0.884109377861023
-  robot_start_position:
-  - 8.902984619140625
-  - 4.209880828857422
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
-installing_alarms:
-  robot_start_orientation:
-  - -0.004966832231730223
-  - -0.0009346522856503725
-  - 0.8125163912773132
-  - 0.5829165577888489
-  robot_start_position:
-  - 14.666000366210938
-  - 2.3852005004882812
-  - -0.018627166748046875
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.003265799954533577
+    - 0.0038569795433431864
+    - -0.9972893595695496
+    - 0.0734056830406189
+    robot_start_position:
+    - -8.090576171875
+    - 14.523651123046875
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
+loading_the_dishwasher:
+  0:
+    robot_start_orientation:
+    - -0.004472167696803808
+    - 0.0023544421419501305
+    - 0.6630809307098389
+    - 0.7485305666923523
+    robot_start_position:
+    - 5.451995849609375
+    - -1.070220947265625
+    - 0.0037841796875
+    scene_model: house_single_floor
 picking_up_toys:
-  robot_start_orientation:
-  - -0.004614339210093021
-  - 0.0020640837028622627
-  - -0.9752883911132812
-  - 0.2208777517080307
-  robot_start_position:
-  - 21.705474853515625
-  - 17.55725860595703
-  - -0.0186309814453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.003785175271332264
+    - -0.0033482732251286507
+    - 0.9034662246704102
+    - 0.42862942814826965
+    robot_start_position:
+    - 21.39404296875
+    - 17.4315185546875
+    - 0.003753662109375
+    scene_model: house_single_floor
 picking_up_trash:
-  robot_start_orientation:
-  - -0.004941981751471758
-  - 0.0010606860741972923
-  - -0.9575472474098206
-  - 0.2882319688796997
-  robot_start_position:
-  - 7.649299621582031
-  - 2.6182403564453125
-  - 0.003772735595703125
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - 0.004324102774262428
+    - -0.0026167959440499544
+    - -0.3354952037334442
+    - 0.9420283436775208
+    robot_start_position:
+    - 6.1107177734375
+    - 1.5191650390625
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 putting_away_Halloween_decorations:
-  robot_start_orientation:
-  - -0.00425264798104763
-  - 0.002731845946982503
-  - -0.9851433634757996
-  - 0.17165955901145935
-  robot_start_position:
-  - 4.992298126220703
-  - 6.425373077392578
-  - 0.003772735595703125
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - 0.0017694442067295313
+    - 0.004734577611088753
+    - 0.24118688702583313
+    - 0.9704654216766357
+    robot_start_position:
+    - 5.041595458984375
+    - 3.8673095703125
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 putting_away_toys:
-  robot_start_orientation:
-  - -0.0014543065335601568
-  - 0.0048402827233076096
-  - 0.4440743029117584
-  - 0.8959757685661316
-  robot_start_position:
-  - 15.693000793457031
-  - 1.8347625732421875
-  - -0.018627166748046875
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - 0.0018227527616545558
+    - -0.004713948350399733
+    - -0.5323176980018616
+    - 0.8465295433998108
+    robot_start_position:
+    - 14.826690673828125
+    - 1.521820068359375
+    - 0.003753662109375
+    scene_model: house_single_floor
 putting_up_Christmas_decorations_inside:
-  robot_start_orientation:
-  - -0.004986591171473265
-  - 0.0008233666885644197
-  - -0.952839732170105
-  - 0.3034319281578064
-  robot_start_position:
-  - 11.657203674316406
-  - 2.621784210205078
-  - -0.018627166748046875
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.002600793493911624
+    - 0.004334295634180307
+    - -0.9998006224632263
+    - 0.019319405779242516
+    robot_start_position:
+    - 14.052398681640625
+    - 0.084808349609375
+    - 0.003753662109375
+    scene_model: house_single_floor
 rearranging_kitchen_furniture:
-  robot_start_orientation:
-  - -0.004584452137351036
-  - -0.002127997810021043
-  - -0.8738417029380798
-  - 0.4861842691898346
-  robot_start_position:
-  - 1.8960075378417969
-  - 3.1573333740234375
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.0037586644757539034
+    - 0.003378926543518901
+    - -0.99294513463974
+    - 0.11846747994422913
+    robot_start_position:
+    - 3.188018798828125
+    - 2.78472900390625
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 setting_mousetraps:
-  robot_start_orientation:
-  - -0.0008757775649428368
-  - -0.004977999720722437
-  - -0.6760244369506836
-  - 0.7368618249893188
-  robot_start_position:
-  - 23.70104217529297
-  - 20.755470275878906
-  - -0.0186309814453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.003881497774273157
+    - 0.0032369557302445173
+    - 0.6089481711387634
+    - 0.7931939363479614
+    robot_start_position:
+    - 0.243072509765625
+    - 2.041015625
+    - 0.003753662109375
+    scene_model: house_double_floor_upper
 slicing_vegetables:
-  robot_start_orientation:
-  - -0.0018432450015097857
-  - -0.004706006962805986
-  - -0.7234260439872742
-  - 0.6903834939002991
-  robot_start_position:
-  - 7.098262786865234
-  - -0.8407440185546875
-  - -0.018604278564453125
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - 0.0021371589973568916
+    - 0.004579930100589991
+    - 0.21560049057006836
+    - 0.9764686226844788
+    robot_start_position:
+    - 5.092041015625
+    - -0.6468505859375
+    - 0.0037841796875
+    scene_model: house_single_floor
 sorting_mail:
-  robot_start_orientation:
-  - -0.004338081460446119
-  - -0.00259349774569273
-  - -0.8564159274101257
-  - 0.5162619352340698
-  robot_start_position:
-  - 4.913021087646484
-  - 4.336200714111328
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.0006021566223353148
+    - -0.0050179422833025455
+    - -0.6624588370323181
+    - 0.7490812540054321
+    robot_start_position:
+    - 4.64581298828125
+    - 5.586273193359375
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 spraying_for_bugs:
-  robot_start_orientation:
-  - -3.806594759225845e-05
-  - -0.005054081790149212
-  - -0.6340760588645935
-  - 0.7732540965080261
-  robot_start_position:
-  - -8.167335510253906
-  - -0.32535552978515625
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.00048238225281238556
+    - -0.005031117703765631
+    - -0.6565077304840088
+    - 0.754302442073822
+    robot_start_position:
+    - -7.423492431640625
+    - -0.280517578125
+    - 0.003753662109375
+    scene_model: house_double_floor_lower
 thawing_frozen_food:
-  robot_start_orientation:
-  - 0.0017503658309578896
-  - -0.004741128534078598
-  - 0.9990696310997009
-  - 0.04282861202955246
-  robot_start_position:
-  - 5.14984130859375
-  - 0.933074951171875
-  - -0.01861572265625
-  scene_model: house_single_floor
+  0:
+    robot_start_orientation:
+    - -0.003672386519610882
+    - 0.003472357988357544
+    - 0.592357873916626
+    - 0.8056590557098389
+    robot_start_position:
+    - 5.504791259765625
+    - -0.95953369140625
+    - 0.0037841796875
+    scene_model: house_single_floor
 turning_on_radio:
-  robot_start_orientation:
-  - -0.0037017320282757282
-  - 0.0034411484375596046
-  - 0.5946402549743652
-  - 0.8039760589599609
-  robot_start_position:
-  - 4.309165954589844
-  - 3.9753189086914062
-  - 0.003765106201171875
-  scene_model: house_double_floor_lower
+  0:
+    robot_start_orientation:
+    - -0.005050721578299999
+    - -0.00017678923904895782
+    - -0.930679976940155
+    - 0.3657994270324707
+    robot_start_position:
+    - 5.29986572265625
+    - 5.574432373046875
+    - 0.003753662109375
+    scene_model: house_double_floor_lower

@@ -56,7 +56,7 @@ class OGRobotServer:
         if self.task_name is not None:
             available_tasks = utils.load_available_tasks()
             assert self.task_name in available_tasks, f"Task {self.task_name} not found in available tasks"
-            self.task_cfg = available_tasks[self.task_name]
+            self.task_cfg = available_tasks[self.task_name][0] # TODO: once we have multiple instances, we need to specify this
         else:
             self.task_cfg = None
 
@@ -177,13 +177,6 @@ class OGRobotServer:
                 else:
                     if isinstance(obj, (R1, R1Pro)):
                         obj.base_footprint_link.mass = 250.0
-            
-            # TODO: remove this once we have RC6
-            if self.task_name == "carrying_in_groceries":
-                for car in self.env.scene.object_registry("category", "car"):
-                    for link in car.links.values():
-                        if "trunk" in link.name:
-                            link.mass = link.mass * 0.5
 
         # Make sure robot fingers are extra grippy
         gripper_mat = lazy.isaacsim.core.api.materials.PhysicsMaterial(
@@ -237,7 +230,7 @@ class OGRobotServer:
         self.active_camera_id = 0
 
         # Setup visualizers
-        self.vis_elements = utils.setup_visualizers(self.robot, self.env.scene)
+        self.vis_elements = utils.setup_robot_visualizers(self.robot, self.env.scene)
         self.eef_cylinder_geoms = self.vis_elements["eef_cylinder_geoms"]
         self.vis_mats = self.vis_elements["vis_mats"]
         self.vertical_visualizers = self.vis_elements["vertical_visualizers"]
@@ -272,6 +265,9 @@ class OGRobotServer:
             
             # Setup object beacons
             self.object_beacons = utils.setup_object_beacons(self.task_relevant_objects, self.env.scene)
+            
+            # Setup task-specific visualizers
+            self.task_visualizers = utils.setup_task_visualizers(self.task_relevant_objects, self.env.scene)
             
             # Get task-irrelevant objects
             self.task_irrelevant_objects = [obj for obj in self.env.scene.objects
