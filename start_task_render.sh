@@ -62,13 +62,22 @@ while true; do
   fi
 done
 
+instance_id=0
+while true; do
+  read -p "Select an instance id by number between 0 and 99, or type a custom one: " INPUT
 
+  instance_id="$INPUT"
+  echo "Custom instance_id selected: $instance_id"
+  break
+done
 
 
 # Print selected configuration
 echo -e "\nConfiguration:"
-echo "Task Name          : $TASK_NAME"
-echo "Operator          : $OPERATOR"
+echo "Task Name            : $TASK_NAME"
+echo "Operator             : $OPERATOR"
+echo "Instance id          : $instance_id"
+
 
 # Confirm before proceeding
 echo -e "\nProceed with this configuration? (y/n)"
@@ -81,10 +90,10 @@ fi
 echo $TASK_NAME
 echo $OPERATOR
 batch_id=1
-echo "{\"operator\": \"${OPERATOR}\", \"batch_id\": \"${batch_id}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/batch_${batch_id}__${time_string}__episode.json
+echo "{\"operator\": \"${OPERATOR}\", \"batch_id\": \"${batch_id}\", \"instance_id\": \"${instance_id}\", \"timestamp\": \"$time_string\", \"task_name\": \"${TASK_NAME}\", \"host_name\": \"$host_name\"}" > ${SAVE_FOLDER}/batch_${batch_id}__${time_string}__episode.json
 # Run the Python script multiple times
-echo "Would run: python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5"
-python experiments/launch_nodes.py --batch_id ${batch_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5
+echo "Would run: python experiments/launch_nodes.py --batch_id ${batch_id} --instance_id ${instance_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5"
+python experiments/launch_nodes.py --batch_id ${batch_id} --instance_id ${instance_id} --recording_path ${SAVE_FOLDER}/batch_${batch_id}__${time_string}.hdf5
 
 
 echo "All iterations completed successfully."
