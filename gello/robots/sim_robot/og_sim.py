@@ -1,3 +1,4 @@
+import os
 import time
 import torch as th
 import numpy as np
@@ -52,7 +53,8 @@ class OGRobotServer:
         # Case 2: Batch ID provided
         elif batch_id is not None:
             assert batch_id in [0, 1], f"Got invalid batch id: {batch_id}. Must be 0 or 1"
-            self.task_name = choose_from_options(options=VALIDATED_TASKS[batch_id], 
+            assert instance_id is not None, "Have to specify both batch id and instance id"
+            self.task_name = choose_from_options(options=VALIDATED_TASKS[batch_id],
                                                 name="task options", 
                                                 random_selection=False)
         # Case 3: No task specified
@@ -92,7 +94,8 @@ class OGRobotServer:
 
         self.env = og.Environment(configs=cfg)
         self.robot = self.env.robots[0]
-        self.instance_id = instance_id - 1      # This will be immediately incremented during our first reset() during initialization
+        # Initialize instance ID, decrementing by 1 to ensure proper increment during the first reset
+        self.instance_id = (instance_id - 1) if instance_id is not None else None
 
         self.ghosting = ghosting
         if self.ghosting:
@@ -138,7 +141,8 @@ class OGRobotServer:
                 viewport_camera_path=og.sim.viewer_camera.active_camera_path,
                 only_successes=False,
                 flush_every_n_traj=1,
-                use_vr=VIEWING_MODE == ViewingMode.VR
+                use_vr=VIEWING_MODE == ViewingMode.VR,
+                keep_checkpoint_rollback_data=True,
             )
 
         # Status tracking
@@ -162,8 +166,15 @@ class OGRobotServer:
         self.obs = {}
         
         # Cache values
-        self._trunk_tilt_limits = {"lower": self.robot.joint_lower_limits[self.robot.trunk_control_idx][2],
-                                   "upper": self.robot.joint_upper_limits[self.robot.trunk_control_idx][2]}
+        qpos_min, qpos_max = self.robot.joint_lower_limits, self.robot.joint_upper_limits
+        self._trunk_tilt_limits = {"lower": qpos_min[self.robot.trunk_control_idx][2],
+                                   "upper": qpos_max[self.robot.trunk_control_idx][2]}
+        self._arm_joint_limits = dict()
+        for arm in self.robot.arm_names:
+            self._arm_joint_limits[arm] = {
+                "lower": qpos_min[self.robot.arm_control_idx[arm]],
+                "upper": qpos_max[self.robot.arm_control_idx[arm]],
+            }
 
         with og.sim.stopped():
             # # Set lower position iteration count for faster sim speed
@@ -258,10 +269,10 @@ class OGRobotServer:
         # Setup task-related elements if task is specified
         if self.task_name is not None:
             # Setup task instruction UI
-            self.overlay_window, self.text_labels, self.bddl_goal_conditions = utils.setup_task_instruction_ui(
+            self.overlay_window, self.text_labels, self.instance_id_label, self.bddl_goal_conditions = utils.setup_task_instruction_ui(
                 self.task_name, 
-                self.env, 
-                self.robot
+                self.env,
+                self.instance_id
             )
             
             # Initialize goal status tracking
@@ -661,7 +672,8 @@ class OGRobotServer:
         # Apply arm action + extra dimension from base
         if isinstance(self.robot, R1):
             # Apply arm action
-            left_act, right_act = self._joint_cmd["left_arm"].clone(), self._joint_cmd["right_arm"].clone()
+            left_act = self._joint_cmd["left_arm"].clone().clip(self._arm_joint_limits["left"]["lower"], self._arm_joint_limits["left"]["upper"])
+            right_act = self._joint_cmd["right_arm"].clone().clip(self._arm_joint_limits["right"]["lower"], self._arm_joint_limits["right"]["upper"])
 
             # If we're in cooldown, clip values based on max delta value
             if self._in_cooldown:
@@ -781,7 +793,13 @@ class OGRobotServer:
                 activity_definition_id=self.env.task.activity_definition_id,
                 activity_instance_id=self.instance_id,
             )
-            with open(f"{gm.DATASET_PATH}/scenes/{scene_model}/json/{tro_filename}-tro_state.json", "r") as f:
+            tro_file_path = f"{gm.DATASET_PATH}/scenes/{scene_model}/json/{scene_model}_task_{self.env.task.activity_name}_instances/{tro_filename}-tro_state.json"
+            # check if tro_file_path exists, if not, then presumbaly we are done
+            if not os.path.exists(tro_file_path):
+                print(f"Task {self.env.task.activity_name} instance id: {self.instance_id} does not exist")
+                print("No more task instances to load, exiting...")
+                self.stop()
+            with open(tro_file_path, "r") as f:
                 tro_state = recursively_convert_to_torch(json.load(f))
             self.env.scene.reset()
             for bddl_name, obj_state in tro_state.items():
@@ -795,6 +813,7 @@ class OGRobotServer:
                     self.env.task.object_scope[bddl_name].load_state(obj_state, serialized=False)
             self.env.scene.update_initial_file()
             print(f"\nLoading task {self.env.task.activity_name} instance id: {self.instance_id}\n")
+            utils.update_instance_id_label(self.instance_id_label, self.instance_id)
 
         # Reset env
         self.env.reset()
