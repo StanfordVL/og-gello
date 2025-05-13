@@ -1,9 +1,12 @@
+import os
 import time
 import torch as th
 import numpy as np
 from typing import Dict, Optional
+import json
 
 import omnigibson as og
+from omnigibson.macros import gm
 import omnigibson.lazy as lazy
 from omnigibson.envs import DataCollectionWrapper
 from omnigibson.robots import REGISTERED_ROBOTS
@@ -19,11 +22,14 @@ from omnigibson.prims.xform_prim import XFormPrim
 from omnigibson.utils.usd_utils import GripperRigidContactAPI, ControllableObjectViewAPI
 import omnigibson.utils.transform_utils as T
 from omnigibson.utils.config_utils import parse_config
+from omnigibson.utils.python_utils import recursively_convert_to_torch
 
 from gello.robots.sim_robot.zmq_server import ZMQRobotServer, ZMQServerThread
 
 from gello.robots.sim_robot.og_teleop_cfg import *
 import gello.robots.sim_robot.og_teleop_utils as utils
+
+from bddl.activity import Conditions
 
 
 class OGRobotServer:
@@ -35,7 +41,9 @@ class OGRobotServer:
         port: int = 5556,
         recording_path: Optional[str] = None,
         task_name: Optional[str] = None,
+        partial_load: bool = True,
         batch_id: Optional[int] = None, # 0 or 1
+        instance_id: Optional[int] = None,
         ghosting: bool = True,
     ):
         # Case 1: Direct task name provided
@@ -45,7 +53,8 @@ class OGRobotServer:
         # Case 2: Batch ID provided
         elif batch_id is not None:
             assert batch_id in [0, 1], f"Got invalid batch id: {batch_id}. Must be 0 or 1"
-            self.task_name = choose_from_options(options=VALIDATED_TASKS[batch_id], 
+            assert instance_id is not None, "Have to specify both batch id and instance id"
+            self.task_name = choose_from_options(options=VALIDATED_TASKS[batch_id],
                                                 name="task options", 
                                                 random_selection=False)
         # Case 3: No task specified
@@ -80,8 +89,13 @@ class OGRobotServer:
         robot_config = utils.generate_robot_config(self.task_name, self.task_cfg)
         cfg["robots"] = [robot_config]
 
+        if partial_load:
+            cfg["scene"]["load_room_types"] = utils.get_task_relevant_room_types(activity_name=self.task_name)
+
         self.env = og.Environment(configs=cfg)
         self.robot = self.env.robots[0]
+        # Initialize instance ID, decrementing by 1 to ensure proper increment during the first reset
+        self.instance_id = (instance_id - 1) if instance_id is not None else None
 
         self.ghosting = ghosting
         if self.ghosting:
@@ -127,7 +141,8 @@ class OGRobotServer:
                 viewport_camera_path=og.sim.viewer_camera.active_camera_path,
                 only_successes=False,
                 flush_every_n_traj=1,
-                use_vr=VIEWING_MODE == ViewingMode.VR
+                use_vr=VIEWING_MODE == ViewingMode.VR,
+                keep_checkpoint_rollback_data=True,
             )
 
         # Status tracking
@@ -151,8 +166,15 @@ class OGRobotServer:
         self.obs = {}
         
         # Cache values
-        self._trunk_tilt_limits = {"lower": self.robot.joint_lower_limits[self.robot.trunk_control_idx][2],
-                                   "upper": self.robot.joint_upper_limits[self.robot.trunk_control_idx][2]}
+        qpos_min, qpos_max = self.robot.joint_lower_limits, self.robot.joint_upper_limits
+        self._trunk_tilt_limits = {"lower": qpos_min[self.robot.trunk_control_idx][2],
+                                   "upper": qpos_max[self.robot.trunk_control_idx][2]}
+        self._arm_joint_limits = dict()
+        for arm in self.robot.arm_names:
+            self._arm_joint_limits[arm] = {
+                "lower": qpos_min[self.robot.arm_control_idx[arm]],
+                "upper": qpos_max[self.robot.arm_control_idx[arm]],
+            }
 
         with og.sim.stopped():
             # # Set lower position iteration count for faster sim speed
@@ -177,6 +199,11 @@ class OGRobotServer:
                 else:
                     if isinstance(obj, (R1, R1Pro)):
                         obj.base_footprint_link.mass = 250.0
+
+            # Update ghost robot's masses to be uniform to avoid orthonormal errors
+            if self.ghosting:
+                for link in self.ghost.links.values():
+                    link.mass = 0.1
 
         # Make sure robot fingers are extra grippy
         gripper_mat = lazy.isaacsim.core.api.materials.PhysicsMaterial(
@@ -242,10 +269,10 @@ class OGRobotServer:
         # Setup task-related elements if task is specified
         if self.task_name is not None:
             # Setup task instruction UI
-            self.overlay_window, self.text_labels, self.bddl_goal_conditions = utils.setup_task_instruction_ui(
+            self.overlay_window, self.text_labels, self.instance_id_label, self.bddl_goal_conditions = utils.setup_task_instruction_ui(
                 self.task_name, 
-                self.env, 
-                self.robot
+                self.env,
+                self.instance_id
             )
             
             # Initialize goal status tracking
@@ -645,7 +672,8 @@ class OGRobotServer:
         # Apply arm action + extra dimension from base
         if isinstance(self.robot, R1):
             # Apply arm action
-            left_act, right_act = self._joint_cmd["left_arm"].clone(), self._joint_cmd["right_arm"].clone()
+            left_act = self._joint_cmd["left_arm"].clone().clip(self._arm_joint_limits["left"]["lower"], self._arm_joint_limits["left"]["upper"])
+            right_act = self._joint_cmd["right_arm"].clone().clip(self._arm_joint_limits["right"]["lower"], self._arm_joint_limits["right"]["upper"])
 
             # If we're in cooldown, clip values based on max delta value
             if self._in_cooldown:
@@ -714,8 +742,14 @@ class OGRobotServer:
 
         return action
 
-    def reset(self):
-        """Reset the environment and robot state"""
+    def reset(self, increment_instance=True):
+        """
+        Reset the environment and robot state
+
+        Args:
+            increment_instance (bool): If True and self.instance_id is not None, will increment the instance to reset to
+                and reset to the updated instance id's initial state
+        """
         if self._recording_path is not None:
             reset_text = "Resetting environment, episode recorded"
         else:
@@ -747,6 +781,39 @@ class OGRobotServer:
                 self._joint_cmd["button_home"] = th.zeros(1)
                 self._joint_cmd["button_left"] = th.zeros(1)
                 self._joint_cmd["button_right"] = th.zeros(1)
+
+        # Update the instance id / initial state if the instance ID is specified
+        # We will manually update the task relevant objects (TRO) state
+        if self.instance_id is not None and increment_instance:
+            self.instance_id += 1
+            scene_model = self.env.task.scene_name
+            tro_filename = self.env.task.get_cached_activity_scene_filename(
+                scene_model=scene_model,
+                activity_name=self.env.task.activity_name,
+                activity_definition_id=self.env.task.activity_definition_id,
+                activity_instance_id=self.instance_id,
+            )
+            tro_file_path = f"{gm.DATASET_PATH}/scenes/{scene_model}/json/{scene_model}_task_{self.env.task.activity_name}_instances/{tro_filename}-tro_state.json"
+            # check if tro_file_path exists, if not, then presumbaly we are done
+            if not os.path.exists(tro_file_path):
+                print(f"Task {self.env.task.activity_name} instance id: {self.instance_id} does not exist")
+                print("No more task instances to load, exiting...")
+                self.stop()
+            with open(tro_file_path, "r") as f:
+                tro_state = recursively_convert_to_torch(json.load(f))
+            self.env.scene.reset()
+            for bddl_name, obj_state in tro_state.items():
+                if "agent" in bddl_name:
+                    # Only set pose (we assume this is a holonomic robot, so ignore Rx / Ry and only take Rz component
+                    # for orientation
+                    robot_pos = obj_state["joint_pos"][:3] + obj_state["root_link"]["pos"]
+                    robot_quat = T.euler2quat(th.tensor([0, 0, obj_state["joint_pos"][5]]))
+                    self.env.task.object_scope[bddl_name].set_position_orientation(robot_pos, robot_quat)
+                else:
+                    self.env.task.object_scope[bddl_name].load_state(obj_state, serialized=False)
+            self.env.scene.update_initial_file()
+            print(f"\nLoading task {self.env.task.activity_name} instance id: {self.instance_id}\n")
+            utils.update_instance_id_label(self.instance_id_label, self.instance_id)
 
         # Reset env
         self.env.reset()

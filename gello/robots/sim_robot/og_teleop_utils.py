@@ -16,8 +16,38 @@ from omnigibson.sensors import VisionSensor
 from omnigibson.objects.usd_object import USDObject
 from omnigibson.robots.r1 import R1
 from omnigibson.robots.r1pro import R1Pro
+from bddl.activity import Conditions
 
 from gello.robots.sim_robot.og_teleop_cfg import *
+
+
+from bddl.activity import Conditions
+from bddl.object_taxonomy import ObjectTaxonomy
+import json
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--activity", type=str, required=True)
+
+ot = ObjectTaxonomy()
+
+
+def get_task_relevant_room_types(activity_name):
+    activity_conditions = Conditions(
+        activity_name,
+        0,
+        simulator_name="omnigibson",
+        predefined_problem=None,
+    )
+    init_conds = activity_conditions.parsed_initial_conditions
+    room_types = set()
+    for init_cond in init_conds:
+        if len(init_cond) == 3:
+            if "inroom" == init_cond[0]:
+                room_types.add(init_cond[2])
+
+    return list(room_types)
+
 
 def infer_trunk_translate_from_torso_qpos(qpos):
     """
@@ -512,20 +542,20 @@ def setup_flashlights(robot):
     return flashlights
 
 
-def setup_task_instruction_ui(task_name, env, robot):
+def setup_task_instruction_ui(task_name, env, instance_id=None):
     """
     Set up UI for displaying task instructions and goal status
     
     Args:
         task_name (str): Name of the task
         env: Environment object
-        robot: Robot object
+        instance_id (int, optional): Instance ID to display in the top right corner
         
     Returns:
-        tuple: (overlay_window, text_labels, bddl_goal_conditions)
+        tuple: (overlay_window, text_labels, instance_id_label, bddl_goal_conditions)
     """
     if task_name is None:
-        return None, None, None
+        return None, None, None, None
     
     bddl_goal_conditions = env.task.activity_natural_language_goal_conditions
 
@@ -545,10 +575,30 @@ def setup_task_instruction_ui(task_name, env, robot):
     og.sim.render()
 
     text_labels = []
+    instance_id_label = None
+
     with overlay_window.frame:
         with lazy.omni.ui.ZStack():
             # Bottom layer - transparent spacer
             lazy.omni.ui.Spacer()
+            
+            # Create a container for the instance ID in the top right corner
+            if instance_id is not None:
+                with lazy.omni.ui.VStack(alignment=lazy.omni.ui.Alignment.RIGHT_TOP, spacing=0):
+                    lazy.omni.ui.Spacer(height=UI_SETTINGS["top_margin"])  # Top margin
+                    with lazy.omni.ui.HStack(height=20):
+                        instance_id_label = lazy.omni.ui.Label(
+                            f"Instance ID: {instance_id}",
+                            alignment=lazy.omni.ui.Alignment.RIGHT_CENTER,
+                            style={
+                                "color": 0xFFFFFFFF,  # White color (ABGR)
+                                "font_size": UI_SETTINGS["font_size"],
+                                "margin": 0,
+                                "padding": 0
+                            }
+                        )
+                        lazy.omni.ui.Spacer(width=UI_SETTINGS["left_margin"])  # Right margin
+            
             # Text container at top left
             with lazy.omni.ui.VStack(alignment=lazy.omni.ui.Alignment.LEFT_TOP, spacing=0):
                 lazy.omni.ui.Spacer(height=UI_SETTINGS["top_margin"])  # Top margin
@@ -572,7 +622,7 @@ def setup_task_instruction_ui(task_name, env, robot):
     # Force render to update the overlay
     og.sim.render()
     
-    return overlay_window, text_labels, bddl_goal_conditions
+    return overlay_window, text_labels, instance_id_label, bddl_goal_conditions
 
 
 def setup_status_display_ui(main_viewport):
@@ -723,41 +773,42 @@ def setup_object_beacons(task_relevant_objects, scene):
 
 def setup_task_visualizers(task_relevant_objects, scene):
     task_visualizers = {}
-    for obj in task_relevant_objects:
-        for link in obj.links.values():
-            if link.is_meta_link and link.meta_link_type == "attachment":
-                # Create a visualizer for the attachment link
-                vis_prim_path = f"{link.prim_path}/attachment_visualizer"
-                vis_prim = create_primitive_mesh(
-                    vis_prim_path,
-                    "Sphere",
-                    extents=1.0
-                )
-                visualizer = VisualGeomPrim(
-                    relative_prim_path=absolute_prim_path_to_scene_relative(scene, vis_prim_path),
-                    name=f"{obj.name}:attachment_visualizer"
-                )
-                visualizer.load(scene)
+    # TODO: add these back in a mode for attachment tasks
+    # for obj in task_relevant_objects:
+    #     for link in obj.links.values():
+    #         if link.is_meta_link and link.meta_link_type == "attachment":
+    #             # Create a visualizer for the attachment link
+    #             vis_prim_path = f"{link.prim_path}/attachment_visualizer"
+    #             vis_prim = create_primitive_mesh(
+    #                 vis_prim_path,
+    #                 "Sphere",
+    #                 extents=1.0
+    #             )
+    #             visualizer = VisualGeomPrim(
+    #                 relative_prim_path=absolute_prim_path_to_scene_relative(scene, vis_prim_path),
+    #                 name=f"{obj.name}:attachment_visualizer"
+    #             )
+    #             visualizer.load(scene)
                 
-                # Set the position and scale of the visualizer
-                visualizer.scale = th.tensor([0.05, 0.05, 0.05]) / link.scale
-                visualizer.set_position_orientation(
-                    position=link.get_position_orientation()[0], 
-                    orientation=link.get_position_orientation()[1]
-                )
+    #             # Set the position and scale of the visualizer
+    #             visualizer.scale = th.tensor([0.05, 0.05, 0.05]) / link.scale
+    #             visualizer.set_position_orientation(
+    #                 position=link.get_position_orientation()[0], 
+    #                 orientation=link.get_position_orientation()[1]
+    #             )
                 
-                mat = MaterialPrim(
-                    relative_prim_path=absolute_prim_path_to_scene_relative(scene, f"{link.prim_path}/attachment_visualizer_mat"),
-                    name=f"{obj.name}:attachment_visualizer_mat",
-                )
-                mat.load(scene)
-                mat.diffuse_color_constant = th.tensor([0.0, 0.0, 1.0]) if link.meta_link_id.endswith("M") else th.tensor([1.0, 0.4, 0.75])
-                mat.enable_emission = True
-                mat.emissive_color = th.tensor([0.0, 0.0, 1.0]) if link.meta_link_id.endswith("M") else th.tensor([1.0, 0.4, 0.75])
-                mat.emissive_intensity = 10000.0
-                visualizer.material = mat
+    #             mat = MaterialPrim(
+    #                 relative_prim_path=absolute_prim_path_to_scene_relative(scene, f"{link.prim_path}/attachment_visualizer_mat"),
+    #                 name=f"{obj.name}:attachment_visualizer_mat",
+    #             )
+    #             mat.load(scene)
+    #             mat.diffuse_color_constant = th.tensor([0.0, 0.0, 1.0]) if link.meta_link_id.endswith("M") else th.tensor([1.0, 0.4, 0.75])
+    #             mat.enable_emission = True
+    #             mat.emissive_color = th.tensor([0.0, 0.0, 1.0]) if link.meta_link_id.endswith("M") else th.tensor([1.0, 0.4, 0.75])
+    #             mat.emissive_intensity = 10000.0
+    #             visualizer.material = mat
                 
-                task_visualizers[obj] = visualizer
+    #             task_visualizers[obj] = visualizer
     return task_visualizers
 
 def setup_ghost_robot(scene, task_cfg=None):
@@ -929,10 +980,24 @@ def update_ghost_robot(ghost, robot, action, ghost_appear_counter, ghost_info):
     
     if update:
         # Concatenate arm and torso indices and set joint positions
-        update_indices = th.cat([ghost_info["torso_joint_idxs"], ghost_info["arm_joint_idxs"]])
+        update_indices = th.cat([ghost_info["torso_joint_idxs"], ghost_info["arm_joint_idxs"], ghost_info["finger_joint_idxs"]])
         ghost.set_joint_positions(ghost_qpos[update_indices], indices=update_indices, normalized=False, drive=False)
     
     return ghost_appear_counter
+
+def update_instance_id_label(instance_id_label, instance_id):
+    """
+    Update the instance ID label in the UI
+    
+    Args:
+        instance_id_label: Label object for displaying instance ID
+        instance_id: New instance ID to display
+        
+    Returns:
+        None
+    """
+    if instance_id_label is not None and instance_id is not None:
+        instance_id_label.text = f"Instance ID: {instance_id}"
 
 
 def update_goal_status(text_labels, goal_status, prev_goal_status, env, recording_path=None, event_queue=None):
@@ -1042,7 +1107,7 @@ def update_reachability_visualizers(reachability_visualizers, joint_cmd, prev_ba
         return prev_base_motion
 
     # Show visualizers only when there's nonzero base motion
-    has_base_motion = th.any(th.abs(joint_cmd["base"]) > 0.0)
+    has_base_motion = th.any(th.abs(joint_cmd["base"]) > 1e-3)
     
     if has_base_motion != prev_base_motion:
         for edge in reachability_visualizers.values():
