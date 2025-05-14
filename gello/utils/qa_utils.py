@@ -1,5 +1,6 @@
 import omnigibson as og
 from omnigibson.envs import EnvMetric
+from omnigibson.tasks import BehaviorTask
 from omnigibson.utils.usd_utils import RigidContactAPI
 from omnigibson.utils.constants import STRUCTURE_CATEGORIES
 from omnigibson.utils.backend_utils import _compute_backend as cb
@@ -193,7 +194,42 @@ class FailedGraspMetric(EnvMetric):
         for i, robot in enumerate(env.robots):
             # Record whether fingers are closed (values ~ 0) -- this implies a failed grasp
             for arm in robot.arm_names:
-                step_metrics[f"robot{i}::arm_{arm}::fingers_closed"] = robot.get_joint_positions()[]
+                step_metrics[f"robot{i}::arm_{arm}::fingers_closed"] = th.allclose(robot.get_joint_positions()[robot.gripper_control_idx[arm]], th.zeros(2), atol=1e-4).item()
+        return step_metrics
+
+    def _compute_episode_metrics(self, env, episode_info):
+        # Compute all fingers_closed upticks to get total failed grasp count
+        episode_metrics = dict()
+        for i, robot in enumerate(env.robots):
+            for arm in robot.arm_names:
+                pf = f"robot{i}::arm_{arm}"
+                fingers_closed = th.tensor(episode_info[f"{pf}::fingers_closed"])
+                fingers_closed_transition = fingers_closed[1:] & ~fingers_closed[:-1]
+                episode_metrics[f"{pf}::failed_grasp_count"] = fingers_closed_transition.sum().item()
+
+        return episode_metrics
+
+
+class TaskRelevantObjectVelocityMetric(EnvMetric):
+    def __init__(self, step_dt):
+        """
+        Args:
+            step_dt (float): Amount of time between steps, used to differentiate from pos -> vel
+        """
+        self.step_dt = step_dt
+
+        super().__init__()
+
+    @classmethod
+    def is_compatible(cls, env):
+        return isinstance(env.task, BehaviorTask)
+
+    def _compute_step_metrics(self, env, action, obs, reward, terminated, truncated, info):
+        step_metrics = dict()
+        for name, bddl_inst in env.task.object_scope.items():
+            if bddl_inst.is_system or not bddl_inst.exists:
+                continue
+            step_metrics[f"{name}::pos"] = bddl_inst.get_position_orientation()[0]
         return step_metrics
 
     def _compute_episode_metrics(self, env, episode_info):
@@ -202,18 +238,68 @@ class FailedGraspMetric(EnvMetric):
         for pos_key, positions in episode_info.items():
             positions = th.stack(positions, dim=0)
             vels = (positions[1:] - positions[:-1]) / self.step_dt
-            accs = (vels[1:] - vels[:-1]) / self.step_dt
-            jerks = (accs[1:] - accs[:-1]) / self.step_dt
             episode_metrics[f"{pos_key}::vel_avg"] = vels.mean(dim=0)
-            episode_metrics[f"{pos_key}::acc_avg"] = accs.mean(dim=0)
-            episode_metrics[f"{pos_key}::jerk_avg"] = jerks.mean(dim=0)
             episode_metrics[f"{pos_key}::vel_std"] = vels.std(dim=0)
-            episode_metrics[f"{pos_key}::acc_std"] = accs.std(dim=0)
-            episode_metrics[f"{pos_key}::jerk_std"] = jerks.std(dim=0)
             episode_metrics[f"{pos_key}::vel_max"] = vels.max().item()
-            episode_metrics[f"{pos_key}::acc_max"] = accs.max().item()
-            episode_metrics[f"{pos_key}::jerk_max"] = jerks.max().item()
 
+        return episode_metrics
+
+
+class FieldOfViewMetric(EnvMetric):
+    """
+    When teleoperator grasp/release, the gripper needs to be in field of view
+    """
+    def __init__(self, head_camera, gripper_link_paths):
+        """
+        Args:
+            head_camera (VisionSensor): The head camera of the robot
+            gripper_link_paths (dict): The paths of the gripper links
+        """
+        self.head_camera = head_camera
+        self.gripper_link_paths = gripper_link_paths
+
+        assert "seg_instance_id" in self.head_camera.modalities, "FieldOfViewMetric requires instance_id_segmentation modality"
+
+        super().__init__()
+
+    def _compute_step_metrics(self, env, action, obs, reward, terminated, truncated, info):
+        step_metrics = dict()
+        for i, robot in enumerate(env.robots):
+            _, info = self.head_camera.get_obs()
+            links_in_fov = set(info["seg_instance_id"].values())
+
+            for arm in robot.arm_names:
+                is_grasping = bool(robot.is_grasping(arm))
+                # check if any of the gripper link for this arm is in the field of view
+                gripper_in_fov = len(links_in_fov.intersection(self.gripper_link_paths[arm])) > 0
+
+                step_metrics[f"robot{i}::arm{arm}::is_grasping"] = is_grasping
+                step_metrics[f"robot{i}::arm{arm}::gripper_in_fov"] = gripper_in_fov
+        return step_metrics
+
+    def _compute_episode_metrics(self, env, episode_info):
+        episode_metrics = dict()
+
+        for i, robot in enumerate(env.robots):
+            for arm in robot.arm_names:
+                is_grasping_key = f"robot{i}::arm{arm}::is_grasping"
+                gripper_in_fov_key = f"robot{i}::arm{arm}::gripper_in_fov"
+
+                is_grasping = th.tensor(episode_info[is_grasping_key])
+                gripper_in_fov = th.tensor(episode_info[gripper_in_fov_key])
+
+                # Detect grasping state changes (comparing current with previous)
+                # For index 0, we assume no change (start of episode)
+                grasping_changes = th.zeros_like(is_grasping, dtype=th.bool)
+                # From index 1 onwards, compare with previous state
+                if len(is_grasping) > 1:
+                    grasping_changes[1:] = is_grasping[1:] != is_grasping[:-1]
+
+                # Count steps when gripper is not in field of view
+                episode_metrics[f"robot{i}::arm_{arm}::gripper_outside_fov"] = (gripper_in_fov == 0).sum().item()
+
+                # Count changes when gripper was NOT in field of view (undesired behavior)
+                episode_metrics[f"robot{i}::arm_{arm}::grasp_changes_outside_fov"] = (grasping_changes & ~gripper_in_fov).sum().item()
         return episode_metrics
 
 
