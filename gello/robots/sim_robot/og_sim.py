@@ -90,12 +90,20 @@ class OGRobotServer:
         cfg["robots"] = [robot_config]
 
         if partial_load:
-            cfg["scene"]["load_room_types"] = utils.get_task_relevant_room_types(activity_name=self.task_name)
+            relevant_rooms = utils.get_task_relevant_room_types(activity_name=self.task_name)
+            if self.task_cfg:
+                relevant_rooms = utils.augment_rooms(relevant_rooms, self.task_cfg["scene_model"])
+            cfg["scene"]["load_room_types"] = relevant_rooms
 
         self.env = og.Environment(configs=cfg)
         self.robot = self.env.robots[0]
         # Initialize instance ID, decrementing by 1 to ensure proper increment during the first reset
         self.instance_id = (instance_id - 1) if instance_id is not None else None
+        
+        # Disable opacity to guarantee all objects are visible
+        for obj in self.env.scene.objects:
+            for material in obj.materials:
+                material.enable_opacity = False
 
         self.ghosting = ghosting
         if self.ghosting:
@@ -206,17 +214,18 @@ class OGRobotServer:
                     link.mass = 0.1
 
         # Make sure robot fingers are extra grippy
-        gripper_mat = lazy.isaacsim.core.api.materials.PhysicsMaterial(
-            prim_path=f"{self.robot.prim_path}/Looks/gripper_mat",
-            name="gripper_material",
-            static_friction=2.0,
-            dynamic_friction=1.0,
-            restitution=None,
-        )
-        for _, links in self.robot.finger_links.items():
-            for link in links:
-                for msh in link.collision_meshes.values():
-                    msh.apply_physics_material(gripper_mat)
+        if APPLY_EXTRA_GRIP:
+            gripper_mat = lazy.isaacsim.core.api.materials.PhysicsMaterial(
+                prim_path=f"{self.robot.prim_path}/Looks/gripper_mat",
+                name="gripper_material",
+                static_friction=2.0,
+                dynamic_friction=1.0,
+                restitution=None,
+            )
+            for _, links in self.robot.finger_links.items():
+                for link in links:
+                    for msh in link.collision_meshes.values():
+                        msh.apply_physics_material(gripper_mat)
 
         # Set optimized settings
         utils.optimize_sim_settings(vr_mode=(VIEWING_MODE == ViewingMode.VR))
@@ -811,6 +820,15 @@ class OGRobotServer:
                     self.env.task.object_scope[bddl_name].set_position_orientation(robot_pos, robot_quat)
                 else:
                     self.env.task.object_scope[bddl_name].load_state(obj_state, serialized=False)
+                    
+            # Try to ensure that all task-relevant objects are stable
+            # They should already be stable from the sampled instance, but there is some issue where loading the state
+            # causes some jitter (maybe for small mass / thin objects?)
+            for _ in range(25):
+                og.sim.step_physics()
+                for entity in self.env.task.object_scope.values():
+                    if not entity.is_system and entity.exists:
+                        entity.keep_still()
             self.env.scene.update_initial_file()
             print(f"\nLoading task {self.env.task.activity_name} instance id: {self.instance_id}\n")
             utils.update_instance_id_label(self.instance_id_label, self.instance_id)
