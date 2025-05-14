@@ -1,17 +1,16 @@
 from omnigibson.envs import DataPlaybackWrapper
-from omnigibson.envs import EnvMetric
-from omnigibson.utils.usd_utils import RigidContactAPI
-from omnigibson.utils.constants import STRUCTURE_CATEGORIES
 from omnigibson.utils.config_utils import TorchEncoder
 import torch as th
-from omnigibson.macros import gm
 import os
 import omnigibson as og
 from omnigibson.macros import gm
 import argparse
 import sys
 import json
-from gello.robots.sim_robot.og_teleop_utils import optimize_sim_settings, GHOST_APPEAR_THRESHOLD
+from gello.robots.sim_robot.og_teleop_utils import optimize_sim_settings
+from gello.utils.qa_utils import *
+from gello.utils.b1k_utils import ALL_QA_METRICS, COMMON_QA_METRICS, TASK_QA_METRICS
+import inspect
 
 RUN_QA = True
 
@@ -20,138 +19,8 @@ gm.DEFAULT_VIEWER_WIDTH = 128
 gm.DEFAULT_VIEWER_HEIGHT = 128
 
 
-class MotionMetric(EnvMetric):
-
-    def _compute_step_metrics(self, env, action, obs, reward, terminated, truncated, info):
-        step_metrics = dict()
-        for i, robot in enumerate(env.robots):
-            # Record velocity (we'll derive accel -> jerk at the end of the episode)
-            step_metrics[f"robot{i}::pos"] = robot.get_joint_positions()
-        return step_metrics
-
-    def _compute_episode_metrics(self, env, episode_info):
-        # Derive acceleration -> jerk based on the recorded velocities
-        episode_metrics = dict()
-        for pos_key, positions in episode_info.items():
-            positions = th.stack(positions, dim=0)
-            vels = (positions[1:] - positions[:-1]) / og.sim.get_sim_step_dt()
-            accs = (vels[1:] - vels[:-1]) / og.sim.get_sim_step_dt()
-            jerks = (accs[1:] - accs[:-1]) / og.sim.get_sim_step_dt()
-            episode_metrics[f"{pos_key}::avg_vel"] = vels.mean(dim=0)
-            episode_metrics[f"{pos_key}::avg_acc"] = accs.mean(dim=0)
-            episode_metrics[f"{pos_key}::avg_jerk"] = jerks.mean(dim=0)
-            episode_metrics[f"{pos_key}::max_vel"] = vels.max().item()
-            episode_metrics[f"{pos_key}::max_acc"] = accs.max().item()
-            episode_metrics[f"{pos_key}::max_jerk"] = jerks.max().item()
-
-        return episode_metrics
-
-
-class CollisionMetric(EnvMetric):
-    def __init__(self):
-        self.checks = dict()
-        super().__init__()
-
-    def add_check(self, name, check):
-        """
-        Adds a collision check to this metric, which can be queried by @name
-
-        Args:
-            name (str): name of the check
-            check (function): Collision checker function, with the following signature:
-
-                def check(env: Environment) -> bool
-
-                which should return True if there is collision, else False
-        """
-        self.checks[name] = check
-
-    def remove_check(self, name):
-        """
-        Removes check with corresponding @name
-
-        Args:
-            name (str): name of the check to remove
-        """
-        self.checks.pop(name)
-
-    def _compute_step_metrics(self, env, action, obs, reward, terminated, truncated, info):
-        step_metrics = dict()
-        for name, check in self.checks.items():
-            step_metrics[f"{name}"] = check(env)
-        return step_metrics
-
-    def _compute_episode_metrics(self, env, episode_info):
-        # Compute any collisions from this step
-        episode_metrics = dict()
-        for name, collisions in episode_info.items():
-            collisions = th.tensor(collisions)
-            episode_metrics[f"{name}::n_collision"] = collisions.sum().item()
-
-        return episode_metrics
-
-
-class TaskSuccessMetric(EnvMetric):
-
-    def _compute_step_metrics(self, env, action, obs, reward, terminated, truncated, info):
-        # Record whether task is done (terminated is true but not truncated)
-        return {"done": terminated and not truncated}
-
-    def _compute_episode_metrics(self, env, episode_info):
-        # Derive acceleration -> jerk based on the recorded velocities
-        return {"success": th.any(th.tensor(episode_info["done"])).item()}
-
-
-class GhostHandAppearanceMetric(EnvMetric):
-
-    def _compute_step_metrics(self, env, action, obs, reward, terminated, truncated, info):
-        # Record whether task is done (terminated is true but not truncated)
-        active = False
-        for robot in env.robots:
-            robot_qpos = robot.get_joint_positions(normalized=False)
-            for arm in robot.arm_names:
-                if th.max(th.abs(
-                        robot_qpos[robot.arm_control_idx[arm]] - action[robot.arm_action_idx[arm]]
-                )).item() > GHOST_APPEAR_THRESHOLD:
-                    active = True
-                    break
-            if active:
-                break
-        return {"active": active}
-
-    def _compute_episode_metrics(self, env, episode_info):
-        # Derive acceleration -> jerk based on the recorded velocities
-        return {"n_steps_active": th.tensor(episode_info["active"]).sum().item()}
-
-
-def check_robot_self_collision(env):
-    # TODO: What about gripper finger self collision?
-    for robot in env.robots:
-        link_paths = robot.link_prim_paths
-        if RigidContactAPI.in_contact(link_paths, link_paths):
-            return True
-    return False
-
-
-def check_robot_base_nonarm_nonfloor_collision(env):
-    # TODO: How to check for wall collisions? They're kinematic only
-    # # One solution: Make them non-kinematic only during QA checking
-    # floor_link_paths = []
-    # for structure_category in STRUCTURE_CATEGORIES:
-    #     for structure in env.scene.object_registry("category", structure_category):
-    #         floor_link_paths += structure.link_prim_paths
-    # floor_link_col_idxs = {RigidContactAPI.get_body_col_idx(link_path) for link_path in floor_link_paths}
-
-    for robot in env.robots:
-        robot_link_paths = set(robot.link_prim_paths)
-        for arm in robot.arm_names:
-            robot_link_paths -= set(link.prim_path for link in robot.arm_links[arm])
-            robot_link_paths -= set(link.prim_path for link in robot.gripper_links[arm])
-            robot_link_paths -= set(link.prim_path for link in robot.finger_links[arm])
-    robot_link_idxs = [RigidContactAPI.get_body_col_idx(link_path)[1] for link_path in robot_link_paths]
-    robot_contacts = RigidContactAPI.get_all_impulses(env.scene.idx)[robot_link_idxs]
-
-    return th.any(robot_contacts).item()
+def extract_arg_names(func):
+    return list(inspect.signature(func).parameters.keys())
 
 
 def replay_hdf5_file(hdf_input_path):
@@ -234,7 +103,7 @@ def replay_hdf5_file(hdf_input_path):
         "sensor_type": "VisionSensor",
         "name": f"external_sensor{idx}",
         "relative_prim_path": f"/controllable__r1pro__robot_r1/zed_link/external_sensor{idx}",
-        "modalities": ["rgb"],
+        "modalities": ["rgb", "seg_instance_id"],
         "sensor_kwargs": {
             "image_height": RESOLUTION_DEFAULT,
             "image_width": RESOLUTION_DEFAULT,
@@ -272,14 +141,33 @@ def replay_hdf5_file(hdf_input_path):
 
     if RUN_QA:
         # Add QA metrics
-        env.add_metric(name="success", metric=TaskSuccessMetric())
-        env.add_metric(name="jerk", metric=MotionMetric())
-        env.add_metric(name="ghost_hand", metric=GhostHandAppearanceMetric())
-
-        col_metric = CollisionMetric()
-        col_metric.add_check(name="robot_self", check=check_robot_self_collision)
-        col_metric.add_check(name="robot_nonarm_nonstructure", check=check_robot_base_nonarm_nonfloor_collision)
-        env.add_metric(name="collision", metric=col_metric)
+        metric_kwargs = dict(
+            step_dt=1/30,
+            vel_threshold=0.001,
+            head_camera=env.external_sensors[f"external_sensor{len(env.external_sensors) - 1}"],
+            gripper_link_paths={
+                "left":
+                    set([
+                        '/World/scene_0/controllable__r1pro__robot_r1/left_realsense_link/visuals',
+                        '/World/scene_0/controllable__r1pro__robot_r1/left_gripper_link/visuals',
+                        '/World/scene_0/controllable__r1pro__robot_r1/left_gripper_finger_link1/visuals',
+                        '/World/scene_0/controllable__r1pro__robot_r1/left_gripper_finger_link2/visuals'
+                    ]),
+                "right":
+                    set([
+                        '/World/scene_0/controllable__r1pro__robot_r1/right_realsense_link/visuals',
+                        '/World/scene_0/controllable__r1pro__robot_r1/right_gripper_link/visuals',
+                        '/World/scene_0/controllable__r1pro__robot_r1/right_gripper_finger_link1/visuals',
+                        '/World/scene_0/controllable__r1pro__robot_r1/right_gripper_finger_link2/visuals'
+                    ])
+            },
+        )
+        active_metrics_info = {metric_name: ALL_QA_METRICS[metric_name] for metric_name in COMMON_QA_METRICS}
+        for metric_name, metric_info in active_metrics_info.items():
+            create_fcn = metric_info["cls"] if metric_info["init"] is None else metric_info["init"]
+            init_kwargs = {arg: metric_kwargs[arg] for arg in extract_arg_names(create_fcn)}
+            metric = create_fcn(**init_kwargs)
+            env.add_metric(name=metric_name, metric=metric)
         env.reset()
 
     # Create a list to store video writers and RGB keys
