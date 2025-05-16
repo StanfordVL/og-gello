@@ -92,7 +92,7 @@ class OGRobotServer:
         if partial_load:
             relevant_rooms = utils.get_task_relevant_room_types(activity_name=self.task_name)
             if self.task_cfg:
-                relevant_rooms = utils.augment_rooms(relevant_rooms, self.task_cfg["scene_model"])
+                relevant_rooms = utils.augment_rooms(relevant_rooms, self.task_cfg["scene_model"], self.task_name)
             cfg["scene"]["load_room_types"] = relevant_rooms
 
         self.env = og.Environment(configs=cfg)
@@ -328,6 +328,8 @@ class OGRobotServer:
             ):
                 if event.input == lazy.carb.input.KeyboardInput.R:
                     self.reset()
+                elif event.input == lazy.carb.input.KeyboardInput.P:
+                    self.pause()
                 elif event.input == lazy.carb.input.KeyboardInput.X:
                     self.resume_control()
                 elif event.input == lazy.carb.input.KeyboardInput.ESCAPE:
@@ -750,6 +752,9 @@ class OGRobotServer:
             )
 
         return action
+
+    def pause(self):
+        self._waiting_to_resume = True
 
     def reset(self, increment_instance=True):
         """
