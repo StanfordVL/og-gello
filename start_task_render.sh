@@ -13,7 +13,7 @@ YAML_FILE="sampled_task/available_tasks.yaml"
 
 # Use yq to extract all the top-level keys (scenes)
 TASK_LIST=($(yq e 'keys | .[]' "$YAML_FILE"))
-OPERATOR_LIST=("Deyu" "Shine" "Kris" "Yibo" "Mark" "Test")
+OPERATOR_LIST=("Deyu" "Shine" "Kris" "Mark" "Elaine" "Jia" "Ken" "Su" "Menglin" "Yang" "Test")
 
 print_usage() {
   echo "Interactive script to record ROS episodes"
