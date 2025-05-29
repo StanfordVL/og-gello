@@ -11,6 +11,7 @@ from gello.zmq_core.robot_node import ZMQServerRobot
 @dataclass
 class Args:
     domain: str = "sim"     # Real or sim
+    teleop: str = "JoyLo"  # Teleop type
     robot: str = "R1"       # OG robot class name
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
@@ -32,6 +33,7 @@ def launch_robot_server(args: Args):
         assert args.domain == "sim"
         from gello.robots.sim_robot.og_sim import OGRobotServer
         server = OGRobotServer(
+            teleop=args.teleop,
             robot=args.robot,
             port=port,
             host=args.hostname,
